@@ -1,1 +1,1 @@
-uniq-count: uniq-count.o strutil.o cola.o hash.o
+uniq-count: uniq-count.o lib.o strutil.o cola.o hash.o
