@@ -1,6 +1,6 @@
 #include "cola.h"
 #include <stdlib.h>
-#include <string.h>
+
 
 /*Defino la estructura nodo*/
 typedef struct nodo nodo_t;
@@ -15,12 +15,6 @@ struct cola{
   nodo_t* ultimo;
 };
 
-char *strdup (const char *clave) {
-	char *copia_clave = malloc (strlen (clave) + 1);
-  if (copia_clave) strcpy (copia_clave,clave);
-  return copia_clave;
-}
-
 /*Creo un nodo nuevo, aun si valor es NULL*/
 nodo_t* nodo_crear(void* valor){
   nodo_t* nodo = malloc(sizeof(nodo_t));
@@ -28,11 +22,7 @@ nodo_t* nodo_crear(void* valor){
   if (!nodo){
     return NULL;
   }
-  nodo->dato = strdup((char*)valor);
-  if(!nodo->dato){
-    free(nodo);
-    return NULL;
-  }
+  nodo->dato = valor;
   nodo->proximo = NULL;
   return nodo;
 }
@@ -67,7 +57,7 @@ void cola_destruir(cola_t *cola, void destruir_dato(void*)){
 
 bool cola_esta_vacia(const cola_t *cola){
 
-  if(!cola || !cola->primero){
+  if((!cola) || (!cola->primero)){
     return true;
   }
   return false;
@@ -75,9 +65,12 @@ bool cola_esta_vacia(const cola_t *cola){
 
 /*Encola un elemento en la cola*/
 bool cola_encolar(cola_t *cola, void* valor){
-  if(!cola) return false;
   nodo_t* nodo_nuevo = nodo_crear(valor);
-  if(!nodo_nuevo) return false;
+
+  if(!cola || !nodo_nuevo){
+    free(nodo_nuevo);
+    return false;
+  }
   if(cola_esta_vacia(cola)){
     cola->primero = nodo_nuevo;
     cola->ultimo = nodo_nuevo;
@@ -92,14 +85,18 @@ bool cola_encolar(cola_t *cola, void* valor){
 /*Ver el primer elemento de la cola*/
 void* cola_ver_primero(const cola_t *cola){
   /*en la primitiva cola_esta_vacia, ya verifico if(!cola)*/
-  if(cola_esta_vacia(cola)) return NULL;
+  if(cola_esta_vacia(cola)){
+    return NULL;
+  }
   return cola->primero->dato;
 }
 
 /*Desencolo un elemento de la cola*/
 void* cola_desencolar(cola_t *cola){
   /*en la primitiva cola_esta_vacia, ya verifico if(!cola)*/
-  if(cola_esta_vacia(cola)) return NULL;
+  if(cola_esta_vacia(cola)){
+    return NULL;
+  }
   nodo_t* nodo_aux;
   void* dato;
 
@@ -107,6 +104,8 @@ void* cola_desencolar(cola_t *cola){
   dato = nodo_aux->dato; //almaceno el dato, para luego devolverlo
   cola->primero = nodo_aux->proximo;
   free(nodo_aux);
-  if (cola_esta_vacia(cola)) cola->ultimo = NULL;
+  if (cola_esta_vacia(cola)){
+    cola->ultimo = NULL;
+  }
   return dato;
 }

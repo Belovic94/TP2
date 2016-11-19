@@ -3,18 +3,10 @@
 #include "cola.h"
 #include "strutil.h"
 
-void recorro_palabras(char **vec_palabras, size_t pos, hash_t *hash, cola_t *cola){
-  if(!vec_palabras[pos]) return;
-  int *dato = malloc(sizeof(int));
-  int *dato_aux = hash_obtener(hash, vec_palabras[pos]);
-  if(!dato_aux){
-    *dato = 0;
-    cola_encolar(cola, vec_palabras[pos]);
-  }
-  else *dato = *dato_aux;
-  *dato += 1;
-  hash_guardar(hash, vec_palabras[pos],dato);
-  recorro_palabras(vec_palabras, pos + 1, hash, cola);
+char *strdup (const char *clave) {
+	char *copia_clave = malloc (strlen (clave) + 1);
+  if (copia_clave) strcpy (copia_clave,clave);
+  return copia_clave;
 }
 
 int main(int argc, char *argv[]){
@@ -44,31 +36,43 @@ int main(int argc, char *argv[]){
   size_t capacidad = 0;
   char* linea = NULL;
   char sep = ' ';
-  char **vec_cadenas;
+  char **vec_cadenas, *cadena;
+  int * dato, *dato_aux;
   //Recorro las lineas del archivo.
   while(getline(&linea, &capacidad, archivo) != FIN_ARCHIVO){
     modificar_caracter(&linea, '\n', '\0');
     vec_cadenas = split(linea, sep);
     //Recorro cada palabra del arreglo creado por split.
-    recorro_palabras(vec_cadenas, 0, hash, cola);
+    for (int i = 0; vec_cadenas[i]; i++){
+      dato = malloc(sizeof(int));
+      dato_aux = hash_obtener(hash, vec_cadenas[i]);
+      if(!dato_aux){
+        *dato = 0;
+        cadena = strdup(vec_cadenas[i]);
+        cola_encolar(cola, cadena);
+      }
+      else *dato = *dato_aux;
+      *dato += 1;
+      hash_guardar(hash, vec_cadenas[i], dato);
+    }
     free_strv(vec_cadenas);
   }
   free(linea);
 
   //muestro por pantalla.
   char *clave;
-  int *dato;
+  int *valor;
   while(!cola_esta_vacia(cola)){
     clave = cola_desencolar(cola);
-    dato = hash_borrar(hash, clave);
-    printf("%d %s\n", *dato, clave);
-    free(dato);
+    valor = hash_borrar(hash, clave);
+    printf("%d %s\n", *valor, clave);
+    free(valor);
     free(clave);
   }
 
   //Cierro el archivo y elimino las estructuras auxiliares.
   fclose(archivo);
   hash_destruir(hash);
-  cola_destruir(cola, NULL);
+  cola_destruir(cola, free);
   return EXIT_SUCCESS;
 }

@@ -13,4 +13,4 @@ clean_obj:
 		rm -f *.o
 
 clean: clean_obj
-		rm -f uniq-count
+		rm -f uniq-count heap-utils
