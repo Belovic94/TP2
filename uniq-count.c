@@ -3,11 +3,51 @@
 #include "cola.h"
 #include "strutil.h"
 
+/* ***************************************************************************
+ *                             FUNCIONES AUXILIARES                          *
+ * ***************************************************************************/
+
+/* Crea una copia de la clave pasada por parametro*/
 char *strdup (const char *clave) {
 	char *copia_clave = malloc (strlen (clave) + 1);
   if (copia_clave) strcpy (copia_clave,clave);
   return copia_clave;
 }
+
+/*Recibe un vector de cadenas, una cola y un hash.
+  Aumenta la cantidad de apariciones de aquellas palabras que esten en el hash
+	y agrega las que no están. Estas últimas tambien son agregadas a la cola*/
+void contar_palabras(char *vec_cadenas[], hash_t *hash, cola_t *cola, int pos){
+	if(!vec_cadenas[pos]) return;
+	int *dato = malloc(sizeof(int));
+	int *dato_aux = hash_obtener(hash, vec_cadenas[pos]);
+	if(!dato_aux){
+		*dato = 0;
+		char *cadena = strdup(vec_cadenas[pos]);
+		cola_encolar(cola, cadena);
+	}
+	else *dato = *dato_aux;
+	*dato += 1;
+	hash_guardar(hash, vec_cadenas[pos], dato);
+	contar_palabras(vec_cadenas, hash, cola, pos + 1);
+}
+
+/*Muestra por pantalla las palabras y sus apariciones hasta que la cola ya no tenga palabras*/
+void mostrar_por_pantalla(cola_t *cola, hash_t *hash){
+	char *clave;
+	int *valor;
+	while(!cola_esta_vacia(cola)){
+		clave = cola_desencolar(cola);
+		valor = hash_borrar(hash, clave);
+		printf("%d %s\n", *valor, clave);
+		free(valor);
+		free(clave);
+	}
+}
+
+/* ***************************************************************************
+ *                                UNIQ-COUNT                                 *
+ * ***************************************************************************/
 
 int main(int argc, char *argv[]){
   if(argc != 2){//Verifico los parametros de entrada.
@@ -32,43 +72,22 @@ int main(int argc, char *argv[]){
     return EXIT_FAILURE;
   }
 
-
-  size_t capacidad = 0;
+	size_t capacidad = 0;
   char* linea = NULL;
   char sep = ' ';
-  char **vec_cadenas, *cadena;
-  int * dato, *dato_aux;
+  char **vec_cadenas;
   //Recorro las lineas del archivo.
   while(getline(&linea, &capacidad, archivo) != FIN_ARCHIVO){
-    modificar_caracter(&linea, '\n', '\0');
+    modificar_caracter(&linea, '\n', '\0'); //Saco el salto de linea.
     vec_cadenas = split(linea, sep);
     //Recorro cada palabra del arreglo creado por split.
-    for (int i = 0; vec_cadenas[i]; i++){
-      dato = malloc(sizeof(int));
-      dato_aux = hash_obtener(hash, vec_cadenas[i]);
-      if(!dato_aux){
-        *dato = 0;
-        cadena = strdup(vec_cadenas[i]);
-        cola_encolar(cola, cadena);
-      }
-      else *dato = *dato_aux;
-      *dato += 1;
-      hash_guardar(hash, vec_cadenas[i], dato);
-    }
+		contar_palabras(vec_cadenas, hash, cola, 0);
     free_strv(vec_cadenas);
   }
-  free(linea);
+  free(linea);//libero la linea
 
-  //muestro por pantalla.
-  char *clave;
-  int *valor;
-  while(!cola_esta_vacia(cola)){
-    clave = cola_desencolar(cola);
-    valor = hash_borrar(hash, clave);
-    printf("%d %s\n", *valor, clave);
-    free(valor);
-    free(clave);
-  }
+	//muestro por pantalla.
+	mostrar_por_pantalla(cola, hash);
 
   //Cierro el archivo y elimino las estructuras auxiliares.
   fclose(archivo);

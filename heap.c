@@ -135,3 +135,14 @@ void *heap_desencolar(heap_t *heap){
   downheap(heap, 0, heap->cantidad);
   return dato;
 }
+
+void heap_actualizar_prioridad(heap_t* heap, void* dato){
+    size_t cant = heap_cantidad(heap);
+    for (size_t i = 0; i < cant; i++){
+        if (vector_obtener(heap->vector,i) == dato){
+            upheap(heap,i,cant);
+            downheap(heap,i,cant);
+            break;
+        }
+    }
+}
